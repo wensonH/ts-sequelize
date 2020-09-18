@@ -575,6 +575,13 @@ export class Utils {
     });
     return newObj;
   }
+
+   /**
+   * Returns true if dialect is DM
+   */
+  public static isDM(obj: any): boolean {
+    return obj.dialectOptions && obj.dialectOptions.target && obj.dialectOptions.target.toUpperCase() === 'DM' ? true : false
+  }
 }
 
 /**

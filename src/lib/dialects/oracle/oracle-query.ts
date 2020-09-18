@@ -108,13 +108,13 @@ export class OracleQuery extends AbstractQuery {
 
     // TRANSACTION SUPPORT
     if (_.startsWith(self.sql, 'BEGIN TRANSACTION')) {
-      self.autocommit = false;
+      self.autoCommit = false;
       return Promise.resolve();
     } else if (_.startsWith(self.sql, 'SET AUTOCOMMIT ON')) {
-      self.autocommit = true;
+      self.autoCommit = true;
       return Promise.resolve();
     } else if (_.startsWith(self.sql, 'SET AUTOCOMMIT OFF')) {
-      self.autocommit = false;
+      self.autoCommit = false;
       return Promise.resolve();
     } else if (_.startsWith(self.sql, 'DECLARE x NUMBER')) {
       //Calling a stored procedure for bulkInsert with NO attributes, returns nothing

@@ -7,6 +7,7 @@ import Promise from '../../promise';
 import { AbstractConnectionManager } from '../abstract/abstract-connection-manager';
 import { ParserStore } from '../parserStore';
 import { OracleDialect } from './oracle-dialect';
+import { Utils } from '../../utils';
 
 export const store = new ParserStore('oracle');
 
@@ -130,12 +131,18 @@ export class OracleConnectionManager extends AbstractConnectionManager  {
       return self.lib.getConnection(connectionConfig).then(connection => {
         //Not relevant, node-oracledb considers it if multiple connections are opened / closed; while testing, a few connections are created and closed.
         //We change the session NLS_COMP and NLS_SORT to allow search case insensitive (http://stackoverflow.com/questions/5391069/case-insensitive-searching-in-oracle)
-        const alterSessionQry = "BEGIN EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_COMP=LINGUISTIC'; EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_SORT=BINARY_CI'; END;";
-        return connection.execute(alterSessionQry).then(() => {
-          return connection.commit().then(() => {
-            resolve(connection);
+        if (Utils.isDM(connectionConfig)) {
+          resolve(connection)
+        }
+        else {
+          const alterSessionQry = "BEGIN EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_COMP=LINGUISTIC'; EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_SORT=BINARY_CI'; END;";
+          return connection.execute(alterSessionQry).then(() => {
+            return connection.commit().then(() => {
+              resolve(connection);
+            });
           });
-        });
+        }
+        
       }).catch(err => {
         if (err) {
           //We split to get the error number; it comes as ORA-XXXXX:

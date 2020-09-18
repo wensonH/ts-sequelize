@@ -9,6 +9,7 @@ import { OracleConnectionManager } from './oracle-connection-manager';
 import { OracleQuery } from './oracle-query';
 import { OracleQueryGenerator } from './oracle-query-generator';
 import { OracleQueryInterface } from './oracle-query-interface';
+import { Utils } from '../../utils';
 
 const DataTypes = AllDataTypes.oracle;
 
@@ -64,6 +65,14 @@ export class OracleDialect extends AbstractDialect {
       'upserts' : true,
       'GEOMETRY': false
     });
+    // DM update IDENTITY 
+    if (Utils.isDM(sequelize.options)) {
+      this.supports.autoIncrement = {
+          identityInsert: false, 
+          defaultValue: true, 
+          update: false 
+      }
+    }
   }
 
   public createQueryInterface() : OracleQueryInterface {

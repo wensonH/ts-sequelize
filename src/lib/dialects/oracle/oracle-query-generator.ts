@@ -791,12 +791,14 @@ export class OracleQueryGenerator extends AbstractQueryGenerator {
     valueHash = Utils.removeNullValuesFromHash(valueHash, this.options.omitNull);
     Object.keys(valueHash).forEach(key => {
       value = valueHash[key];
-      fields.push(this.quoteIdentifier(key));
-
       if (modelAttributeMap && modelAttributeMap[key] && modelAttributeMap[key].autoIncrement === true && !value) {
-        values.push('DEFAULT');
-
+         // DM NOT INSERT IDENTITY FIELD
+        if (!Utils.isDM(options)) {
+          fields.push(this.quoteIdentifier(key));   
+          values.push('DEFAULT');
+        }
       } else {
+        fields.push(this.quoteIdentifier(key));
         if (modelAttributeMap && modelAttributeMap[key] && !modelAttributeMap[key].allowNull && (value != null && value.length === 0)) {
           //Oracle refuses an insert in not null column with empty value (considered as null)
           value = ' ';
@@ -1301,6 +1303,9 @@ export class OracleQueryGenerator extends AbstractQueryGenerator {
       //If there is a reserved word, we have to quote it
 
       if (_.includes(oracleReservedWords, identifier.toUpperCase())) {
+        return Utils.addTicks(identifier, '"');
+      }
+      if (this.options.dialectOptions.target.toUpperCase() === 'DM') {
         return Utils.addTicks(identifier, '"');
       }
       return identifier;
