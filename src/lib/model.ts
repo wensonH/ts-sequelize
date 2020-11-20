@@ -2623,7 +2623,7 @@ export class Model extends Mixin {
    * @param  id : Number|String|Buffer, The value of the desired instance's primary key.
    * @see {@link Model.findAll} for a full explanation of options
    */
-  public static findById(param : any, options : {
+  public static findByPk(param : any, options : {
     /**
      * Array<Object|Model|String>, A list of associations to eagerly load using a left join.
      * Supported is either `{ include: [ Model1, Model2, ...]}` or `{ include: [{ model: Model1, as: 'Alias' }]}` or `{ include: ['Alias']}`.
@@ -2648,7 +2648,7 @@ export class Model extends Mixin {
       options.where = {};
       options.where[this.primaryKeyAttribute] = param;
     } else {
-      throw new Error('Argument passed to findById is invalid: ' + param);
+      throw new Error('Argument passed to findByPk is invalid: ' + param);
     }
 
     // Bypass a possible overloaded findOne

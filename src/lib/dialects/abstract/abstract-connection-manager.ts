@@ -283,7 +283,8 @@ export abstract class AbstractConnectionManager {
               this.sequelize.options.databaseVersion = semver.valid(version) ? version : this.defaultVersion;
               this.versionPromise = null;
               // DM will throw error
-              if (!Utils.isDM) return this._disconnect(connection);
+              // if (!Utils.isDM(this.sequelize.options))
+                return this._disconnect(connection);
             });
           }).catch(err => {
             this.versionPromise = null;

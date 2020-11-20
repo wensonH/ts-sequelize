@@ -8,8 +8,12 @@ import { Model } from '../../model';
 import Promise from '../../promise';
 import { AbstractQuery } from '../abstract/abstract-query';
 import * as connectionManager from './oracle-connection-manager';
+import * as AllUtils from '../../utils';
+
 
 const store = connectionManager.store;
+const Utils = AllUtils.Utils;
+
 
 export class OracleQuery extends AbstractQuery {
   private outFormat;
@@ -497,14 +501,14 @@ export class OracleQuery extends AbstractQuery {
             //We should pass here if we only have SELECT COUNT(*) FROM TABLE (WHERE)
             if (this.sql.toUpperCase().startsWith('SELECT COUNT(*)') || this.sql.toUpperCase().startsWith('SELECT COUNT (*)')) {
               const match = this.sql.match(/ AS (\w*) FROM/i);
-              if (match[1]) {
+              if (match && match[1]) {
                 //We use the alias
                 const returnValue = {};
                 returnValue[match[1]] = rows[0][match[1].toUpperCase()];
                 return returnValue;
               }
             }
-            return {count : rows[0].COUNT};
+            return {count : Utils.isDM(this.sequelize.options) ? rows[0].count : rows[0].COUNT};
           }
           let _finalRows : any = [];
           const rowKeys = Object.keys(rows[0]);
@@ -593,12 +597,21 @@ export class OracleQuery extends AbstractQuery {
             if (attrs[key.toLowerCase()] === undefined) {
               //If we don't have a mapping name provided (from the model), we take it from sql
               let firstIdx = -1;
+              let idx = -1;
+              let isDM = Utils.isDM(this.sequelize.options)
 
-              //We first start by checking if this is defined as an alias
-              if (this.sql.toUpperCase().indexOf('AS ' + key) > -1) {
-                //This is an alias, we take it
-                firstIdx = this.sql.toUpperCase().indexOf('AS ' + key) + 3;
+              if (isDM) {
+                idx = this.sql.toUpperCase().indexOf(`AS "${key.toString().toUpperCase()}"`)
               } else {
+                idx = this.sql.toUpperCase().indexOf(`AS ${key}`)
+              }
+              //We first start by checking if this is defined as an alias
+              if (idx > -1) {
+                //This is an alias, we take it.
+                //IF DM, key will start with "
+                firstIdx = isDM ? idx + 4 : idx + 3;
+              }
+              else {
                 //No alias, we take the first occurence we find
                 firstIdx = this.sql.toUpperCase().indexOf(key);
               }
@@ -625,8 +638,9 @@ export class OracleQuery extends AbstractQuery {
         }
         finalRows.push(newRow);
       }
-
-      data.rows = finalRows;
+      if (!Utils.isDM(this.sequelize.options)) {
+        data.rows = finalRows;
+      }
 
       result = this.handleSelectQuery(data.rows);
     } else if (this.isCallQuery()) {

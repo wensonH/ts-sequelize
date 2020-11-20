@@ -105,6 +105,8 @@ export class OracleQueryGenerator extends AbstractQueryGenerator {
   }
 
   public versionQuery() : string {
+    if (Utils.isDM(this.options))
+            return 'SELECT BANNER FROM V$VERSION WHERE BANNER LIKE \'DM%\'';
     return 'SELECT VERSION FROM PRODUCT_COMPONENT_VERSION WHERE PRODUCT LIKE \'Oracle%\'';
   }
 
@@ -746,7 +748,7 @@ export class OracleQueryGenerator extends AbstractQueryGenerator {
     options = options || {};
     _.defaults(options, this.options);
 
-    const valueQuery = 'INSERT INTO <%= table %> (<%= attributes %>) VALUES (<%= values %>)';
+    let valueQuery = 'INSERT INTO <%= table %> (<%= attributes %>) VALUES (<%= values %>)';
     const emptyQuery = 'INSERT INTO <%= table %> VALUES (DEFAULT)';
     const fields = [];
     const values = [];
@@ -799,6 +801,12 @@ export class OracleQueryGenerator extends AbstractQueryGenerator {
         }
       } else {
         fields.push(this.quoteIdentifier(key));
+        if (modelAttributeMap && modelAttributeMap[key] && modelAttributeMap[key].autoIncrement === true && value) {
+          // DM INSERT IDENTITY FIELD NEED TO SET IDENTITY_INSERT ON
+          if (Utils.isDM(options)) {
+              valueQuery = `SET IDENTITY_INSERT ${this.quoteTable(table)} ON;${valueQuery}` 
+          }
+      }
         if (modelAttributeMap && modelAttributeMap[key] && !modelAttributeMap[key].allowNull && (value != null && value.length === 0)) {
           //Oracle refuses an insert in not null column with empty value (considered as null)
           value = ' ';
@@ -1305,7 +1313,7 @@ export class OracleQueryGenerator extends AbstractQueryGenerator {
       if (_.includes(oracleReservedWords, identifier.toUpperCase())) {
         return Utils.addTicks(identifier, '"');
       }
-      if (this.options.dialectOptions.target.toUpperCase() === 'DM') {
+      if (Utils.isDM(this.options.dialectOptions)) {
         return Utils.addTicks(identifier, '"');
       }
       return identifier;
@@ -1367,7 +1375,10 @@ export class OracleQueryGenerator extends AbstractQueryGenerator {
       } else {
         table = this.quoteIdentifier(param);
       }
+      if (Utils.isDM(this.options))
+        table = `${this.options.database}.${table}`;
     }
+    
 
     //Oracle don't support as for table aliases
     if (as) {

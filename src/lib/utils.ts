@@ -580,7 +580,8 @@ export class Utils {
    * Returns true if dialect is DM
    */
   public static isDM(obj: any): boolean {
-    return obj.dialectOptions && obj.dialectOptions.target && obj.dialectOptions.target.toUpperCase() === 'DM' ? true : false
+    const target = obj.target || obj.dialectOptions && obj.dialectOptions.target || ''
+    return target.toUpperCase() === 'DM' ? true : false
   }
 }
 
